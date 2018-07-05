@@ -188,8 +188,21 @@ func modifyStatus(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	fmt.Println("--------tempVal_before---------:\n", tempVal)
 	
 	
-	//check if input status correct and remove Remittance that the status will be modified
-	if tempVal.ContractStatus != cStatus{
+	//check if the input status valid
+	
+	if cStatus == "confirmed" && tempVal.ContractStatus != "init"{
+		return shim.Error("You can't modify the status!!!! The current status is NOT 'init'!!!")
+	}else if cStatus == "cleared" && tempVal.ContractStatus != "confirmed"{
+		return shim.Error("You can't modify the status!!!! The current status is NOT 'confirmed'!!!")
+	}else if cStatus == "remitted" && tempVal.ContractStatus != "cleared"{
+		return shim.Error("You can't modify the status!!!! The current status is NOT 'cleared'!!!")
+	}else if cStatus == "received" && tempVal.ContractStatus != "remitted"{
+		return shim.Error("You can't modify the status!!!! The current status is NOT 'remitted'!!!")
+	}else if cStatus == "init"{
+		return shim.Error("You can't modify the status to init!!!!")
+	}else if tempVal.ContractStatus == cStatus{
+		return shim.Error("The input status and the current status are same!!!! Please check your input status!!!")
+	}else {
 		PingSIDIndexKey, err := stub.CreateCompositeKey(indexName, []string{tempVal.InstructingParty,tempVal.ContractStatus,tempVal.MessageIdentification})
 		fmt.Println("-------------PingSIDIndexKey-------------: %s\n",PingSIDIndexKey)
 		if err != nil {
@@ -230,11 +243,7 @@ func modifyStatus(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	
 		tempVal.ContractStatus = cStatus
 		fmt.Println("--------tempVal_after---------:\n", tempVal)
-	}else if tempVal.ContractStatus == cStatus{
-	    return shim.Error("You can't modify the same status!!!! Please check your input status!!!")
 	}
-	
-
 	
 	
 	

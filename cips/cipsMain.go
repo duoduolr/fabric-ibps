@@ -25,15 +25,18 @@ type SimpleChaincode struct {
 // ----- CIPS ----- //
 type CIPS struct {
 
-	MessageIdentification       string        `json:"MessageIdentification"`  			//InstructingParty+YYYYMMDD+8numbers
-	InstructingParty      		string        `json:"InstructingParty"`        			//
-	DebtorAccount            	string        `json:"DebtorAccount"`           			//
-	DebtorName            		string        `json:"DebtorName"`        			//
-	InstructedParty       		string        `json:"InstructedParty"`     			//
-	CreditorAccount      		string        `json:"CreditorAccount"`				//
-	CreditorName        		string        `json:"CreditorName"`			//
-	Amount            		    string	      `json:"Amount"`			//		
-	ContractStatus            	string	      `json:"ContractStatus"`	// init-confirmed-cleared-remitted-received
+	MessageIdentification       string        `json:"MessageIdentification"`  	//业务ID InstructingParty+YYYYMMDD+8numbers
+	InstructingParty      	    string        `json:"InstructingParty"`        	//发起行ID
+	DebtorAccount               string        `json:"DebtorAccount"`           	//汇款人账户
+	DebtorName            	    string        `json:"DebtorName"`        		//汇款人姓名
+	InstructedParty       	    string        `json:"InstructedParty"`     		//接受行ID
+	CreditorAccount      	    string        `json:"CreditorAccount"`		//收款人账户
+	CreditorName        	    string        `json:"CreditorName"`			//收款人姓名
+	Amount                      string        `json:"Amount"`			//金额
+	ContractStatus              string        `json:"ContractStatus"`	        //状态 init-confirmed-cleared-remitted-received
+	InstructingKey              string        `json:"InstructingKey"`               //发起行加密后的对称加密KEY 
+	InstructedKey               string        `json:"InstructedKey"`                //接受行加密后的对称加密KEY
+        ClearHouseKey               string        `json:"ClearHouseKey"`                //清算中心加密后的对称加密KEY
 }
 
 
@@ -141,6 +144,10 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return getCtrctStateByStatus(stub, args)
 	} else if function == "getHistory"{        //get a Remittance state by ContractStatus
 		return getHistory(stub, args)
+	} else if function == "read" {    //generic read ledger
+		return read(stub, args)
+	} else if function == "write" {      //generic writes to ledger
+		return write(stub, args)
 	}
 
 	// error out
@@ -156,8 +163,8 @@ func sanitize_arguments(strs []string) error{
 		if len(val) <= 0 {
 			return errors.New("Argument " + strconv.Itoa(i) + " must be a non-empty string")
 		}
-		if len(val) > 32 {
-			return errors.New("Argument " + strconv.Itoa(i) + " must be <= 32 characters")
+		if len(val) > 320 {
+			return errors.New("Argument " + strconv.Itoa(i) + " must be <= 320 characters")
 		}
 	}
 	return nil

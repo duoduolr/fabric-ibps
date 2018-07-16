@@ -25,13 +25,16 @@ import (
 //      	0,  	    		1, 	              2,      		   3,       	4,		         5,		  		 6,			  7          		8
 //   MessageIdentification, InstructingParty, DebtorAccount,    DebtorName, InstructedParty, CreditorAccount, CreditorName, 	Amount	, Contractstatus
 //   "id0001",   				 "A",             "q0000", 		 "Jack",     	 "B",             "r0001",        "Rose", 		"10000" , 	"init"
+//              9,                      10,                   11
+//   InstructingKey,               Instructedkey,          ClearHouseKey
+//   asdsfdf2dfe,                  ser4rj3r,               idsdf30okl33
 // ============================================================================================================================
 func Create_Remittance(stub shim.ChaincodeStubInterface, args []string) (pb.Response) {
 	var err error
 	fmt.Println("starting Create_Contract")
 
-	if len(args) != 9 {
-		return shim.Error("Incorrect number of arguments. Expecting 9")
+	if len(args) != 12 {
+		return shim.Error("Incorrect number of arguments. Expecting 12")
 	}
 
 	//input sanitation
@@ -49,6 +52,9 @@ func Create_Remittance(stub shim.ChaincodeStubInterface, args []string) (pb.Resp
 	CreditorName := args[6]
 	Amount := args[7]
 	ContractStatus := args[8]
+	InstructingKey := args[9]
+	Instructedkey := args[10]
+	ClearHouseKey := args[11]
 	
 	//todo - check if contract id already exists
 	contract, err := getContractInfo(stub, MessageIdentification)
@@ -68,7 +74,10 @@ func Create_Remittance(stub shim.ChaincodeStubInterface, args []string) (pb.Resp
 		"CreditorAccount": "` + CreditorAccount + `",
 		"CreditorName": "` + CreditorName +`",
 		"Amount": "` + Amount +`",
-		"ContractStatus": "` + ContractStatus +`"
+		"ContractStatus": "` + ContractStatus +`",
+		"InstructingKey": "` + InstructingKey +`",
+		"Instructedkey": "` + Instructedkey +`",
+		"ClearHouseKey": "` + ClearHouseKey +`"
 	}`
 	
 	
@@ -308,4 +317,39 @@ func modifyStatus(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	return shim.Success(tempvalAsbytes)                  //send it onward
 }
 
-	
+// ============================================================================================================================
+// write() - genric write variable into ledger
+// 
+// Shows Off PutState() - writting a key/value into the ledger
+//
+// Inputs - Array of strings
+//    0   ,    1
+//   key  ,  value
+//  "abc" , "test"
+// ============================================================================================================================
+func write(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+        var key, value string
+        var err error
+        fmt.Println("starting write")
+
+        if len(args) != 2 {
+                return shim.Error("Incorrect number of arguments. Expecting 2. key of the variable and value to set")
+        }
+
+        // input sanitation
+        err = sanitize_arguments(args)
+        if err != nil {
+                return shim.Error(err.Error())
+        }
+
+        key = args[0]                                   //rename for funsies
+        value = args[1]
+        err = stub.PutState(key, []byte(value))         //write the variable into the ledger
+        if err != nil {
+                return shim.Error(err.Error())
+        }
+
+        fmt.Println("- end write")
+        return shim.Success(nil)
+}
+

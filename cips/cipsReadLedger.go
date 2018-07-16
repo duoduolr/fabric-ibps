@@ -84,7 +84,10 @@ func getHistory(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 			tx.Value = emptyContract                 //copy nil contract
 		} else {
 //			fmt.Printf("- 222222222222222222222222222222222\n")
-			json.Unmarshal(historyData.Value, &contract) //un stringify it aka JSON.parse()
+			err := json.Unmarshal(historyData.Value, &contract) //un stringify it aka JSON.parse()
+			if err != nil {
+				fmt.Printf(" json Unmarshal failed :", err);
+			}
 			tx.Value = contract                      //copy contract over
 			fmt.Printf("- contract22222222: %+v\n", contract)
 		}
@@ -292,3 +295,42 @@ func getCtrctStateByStatus(stub shim.ChaincodeStubInterface, args []string) pb.R
 	everythingAsBytes, _ := json.Marshal(everything.remittance)              //convert to array of bytes
 	return shim.Success(everythingAsBytes)
 }
+
+// ============================================================================================================================
+// Read - read a generic variable from ledger
+//
+// Shows Off GetState() - reading a key/value from the ledger
+//
+// Inputs - Array of strings
+//  0
+//  key
+//  "abc"
+// 
+// Returns - string
+// ============================================================================================================================
+func read(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+        var key, jsonResp string
+        var err error
+        fmt.Println("starting read")
+
+        if len(args) != 1 {
+                return shim.Error("Incorrect number of arguments. Expecting key of the var to query")
+        }
+
+        // input sanitation
+        err = sanitize_arguments(args)
+        if err != nil {
+                return shim.Error(err.Error())
+        }
+
+        key = args[0]
+        valAsbytes, err := stub.GetState(key)           //get the var from ledger
+        if err != nil {
+                jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
+                return shim.Error(jsonResp)
+        }
+
+        fmt.Println("- end read")
+        return shim.Success(valAsbytes)                  //send it onward
+}
+
